@@ -1,3 +1,9 @@
+#-------------------------------------------------------------------------------
+#
+# 1. Prepare eDNA dataset
+#
+#-------------------------------------------------------------------------------
+
 library(readxl)
 library(dplyr)
 library(tidyr)
@@ -7,7 +13,7 @@ library(writexl)
 library(hms)
 
 # 1. Load data------------------------------------------------------------------
-file <- paste0(input_data, "/orginal_data/eDNA_data_biodiversity.xlsx")
+file <- paste0(input_data, "/orginal_data/final/_eDNA_data_biodiversity.xlsx")
 
 # 1.1. Read sheets
 asv <- read_excel(file, sheet = "All_ASV")
@@ -108,6 +114,7 @@ asv_sample_ids[!asv_sample_ids %in% meta_asv_ids]
 samples %>%
   filter(is.na(Sample_ID_ASV)) %>%
   select(Original_sample_ID, Sample_ID_ASV, Site, StudyArea, Campaign)
+names(samples)
 
 samples_clean <- samples %>%
   mutate(
@@ -117,9 +124,10 @@ samples_clean <- samples %>%
       TRUE ~ NA_character_
     )
   ) %>%
-  #filter(!is.na(Sample_ID)) %>% #REMOVE SAMPLES NOT MATCHING
+  filter(!is.na(Sample_ID)) %>% #REMOVE SAMPLES THAT DID NOT SEARCH FOR VERTABRATES OR WERE CONTROLS.
   select(
     Sample_ID,
+    'Sequencing comment',
     Original_sample_ID,
     Site,
     StudyArea,
@@ -165,8 +173,11 @@ write.csv2(edna_final, file, row.names = FALSE,  na = "")
 
 # 5. Merge different filters into one-------------------------------------------
 # Metadata columns to keep
+names(edna_final)
 metadata_cols <- c(
   "sample_id",
+  "sequencing_comment",
+  "original_sampling_id",
   "site",
   "study_area",
   "campaign",
@@ -183,6 +194,11 @@ metadata_cols <- c(
 
 metadata_cols <- intersect(metadata_cols, names(edna_final))
 species_cols <- setdiff(names(edna_final), metadata_cols)
+
+# Merge columns based on naming, for example:
+# 03-06-B-R1-16S & 03-06-B-R2-16Sm belong to the same sample but they are different 
+# filters and this is reflected by just a change in the number after the R (R1 and R2)
+
 
 edna_merged <- edna_final %>%
   mutate(sample_id = str_remove(sample_id, "_[0-9]+$")) %>%
