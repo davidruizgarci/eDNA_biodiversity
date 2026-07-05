@@ -294,14 +294,13 @@ check_aquamaps_one_species <- function(sp, detections_df, prob_threshold = 0.4) 
 # 6. Run AquaMaps overlap check for species which occurrence in the study area is unclear------------------------------------------------
 
 #default_db("sqlite")
-#
+
 #aquamaps_overlap <- map_dfr(
 #  species_to_check,
 #  check_aquamaps_one_species,
 #  detections_df = aquamaps_detections,
-#  prob_threshold = 0.4
-#)
-#
+#  prob_threshold = 0.4)
+
 #aquamaps_overlap
 
 # 7. Check AquaMaps overlap for all species------------------------------------------------

@@ -25,7 +25,7 @@ data <- data %>%
 # 2. Make species list----------------------------------------------------------
 # Seleccionar solo las columnas de especies
 species_data <- data %>%
-  select(s_tursiops_truncatus:last_col())
+  dplyr::dplyr::select(s_tursiops_truncatus:last_col())
 
 # Especies detectadas al menos una vez
 detected_species <- names(species_data)[colSums(species_data > 0, na.rm = TRUE) > 0]
@@ -117,12 +117,18 @@ worms_not_found <- worms_check %>%
   filter(worms_found == FALSE)
 
 worms_not_found
+# View
+cat(paste(worms_not_found, collapse = "\n"))
 
 # Inspect those which name may have changed:
 worms_deprecated <- worms_check %>%
   filter(worms_found == TRUE, status != "accepted")
 
 worms_deprecated
+# View
+cat(paste(worms_deprecated, collapse = "\n"))
+
+
 
 # Correct those whose valid name has been detected:
 accepted_species <- worms_check %>%
@@ -229,13 +235,13 @@ species_list_taxonomy <- species_list_worms %>%
     order  = map_chr(classification, extract_rank, "Order"),
     family = map_chr(classification, extract_rank, "Family")
   ) %>%
-  select(-classification)
+  dplyr::select(-classification)
 
 species_list_taxonomy
 
 #species_list_taxonomy %>%
 #  filter(valid_name %in% c("Caretta caretta", "Chelonia mydas", "Dermochelys coriacea")) %>%
-#  select(valid_name, class, order, family)
+#  dplyr::select(valid_name, class, order, family)
 
 # Filter only marine vertebrates:
 marine_vertebrates <- species_list_taxonomy %>%
@@ -247,6 +253,20 @@ marine_vertebrates <- species_list_taxonomy %>%
 
 cat(paste(marine_vertebrates$final_name, collapse = "\n"))
 
+# Check which ones are being eliminated:
+# Species NOT considered marine vertebrates
+non_marine_vertebrates <- species_list_taxonomy %>%
+  filter(
+    !(
+      class %in% c("Teleostei", "Elasmobranchii", "Mammalia") |
+        valid_name %in% c("Caretta caretta", "Chelonia mydas", "Dermochelys coriacea") |
+        class == "Aves"
+    )
+  )
+non_marine_vertebrates %>%
+  dplyr::select(valid_name, class, order, family)
+
+# Remove non-marine vertebrates:
 terrestrial_birds_to_remove <- c(
   "Ardea cinerea",
   "Bubo bubo",
@@ -354,7 +374,7 @@ species_metadata <- tibble(
   ) %>%
   left_join(
     species_list_taxonomy %>%
-      select(
+      dplyr::select(
         final_name,
         valid_name_taxonomy = valid_name,
         final_aphia_id,
@@ -371,7 +391,7 @@ species_metadata <- tibble(
       "No"
     )
   ) %>%
-  select(
+  dplyr::select(
     original_colname,
     input_name,
     worms_found,

@@ -1010,7 +1010,8 @@ visual_iucn_true <- c(
   "Bathypterois dubius",
   "Centrophorus uyato",
   "Parablennius zvonimiri",
-  "Pteroplatytrygon violacea",
+  "Pteroplatytrygon violacea",  
+  "Pomatomus saltatrix",
   "Thunnus alalunga"
 )
 
@@ -1032,7 +1033,6 @@ visual_iucn_false <- c(
   "Trachipterus arcticus",
   "Gobius bucchichi",
   "Millerigobius macrocephalus",
-  "Pomatomus saltatrix",
   "Notoscopelus kroyeri"
 )
 
