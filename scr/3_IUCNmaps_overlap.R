@@ -40,11 +40,8 @@ data <- read.csv(file, sep = ";")
 head(data)
 
 
-#-------------------------------------------------------------------------------
-#
-# 3. Check if marine mammal species belong to study area using IUCN polygons
-#
-#-------------------------------------------------------------------------------
+
+# 2. Check if marine mammal species belong to study area using IUCN polygons-----------------
 
 # Mammals
 mammals_shp <- file.path(
@@ -113,7 +110,7 @@ ggplot() +
   theme_bw()
 
 
-# 3.1. Check if mammal species belongs to study area-----------------------------------
+# 2.1. Check if mammal species belongs to study area-----------------------------------
 head(data)
 head(metadata)
 head(our_mammals)
@@ -168,7 +165,7 @@ mammal_detection_points <- mammal_detections %>%
     remove = FALSE
   )
 
-# 3.1.1. Check overlap:
+# 2.1.1. Check overlap:
 # Temporarily disable S2 for validity checks in lon/lat polygons
 old_s2 <- sf_use_s2()
 sf_use_s2(FALSE)
@@ -330,13 +327,11 @@ gc()
 
 
 
-#-------------------------------------------------------------------------------
-#
-# 4. Check if turtle species belong to study area using IUCN polygons
-#
-#-------------------------------------------------------------------------------
 
-# 4.1. Load IUCN turtle polygons
+
+# 3. Check if turtle species belong to study area using IUCN polygons---------------------
+
+# 3.1. Load IUCN turtle polygons------------------------------------------------
 
 iucn_turtles <- st_read(
   file.path(
@@ -352,7 +347,7 @@ names(iucn_turtles)
 head(iucn_turtles)
 
 
-# 4.2 Select turtle species from our metadata
+# 3.2 Select turtle species from our metadata------------------------------------------------
 
 turtle_metadata <- metadata %>%
   filter(
@@ -375,7 +370,7 @@ turtle_cols_data <- turtle_cols_data[turtle_cols_data %in% names(data)]
 turtle_cols_data
 
 
-# 4.3. Extract turtle detections from data
+# 3.3. Extract turtle detections from data------------------------------------------------
 
 turtle_detections <- data %>%
   mutate(row_id = row_number()) %>%
@@ -403,7 +398,7 @@ turtle_detection_points <- turtle_detections %>%
   )
 
 
-# 4.4. Filter IUCN turtle polygons to our detected turtle species
+# 3.4. Filter IUCN turtle polygons to our detected turtle species------------------------------------------------
 
 iucn_turtles_filtered <- iucn_turtles %>%
   filter(sci_name %in% turtle_metadata$corrected_name)
@@ -411,7 +406,7 @@ iucn_turtles_filtered <- iucn_turtles %>%
 unique(iucn_turtles_filtered$sci_name)
 
 
-# 4.5. Check geometry validity
+# 3.5. Check geometry validity------------------------------------------------
 
 old_s2 <- sf_use_s2()
 sf_use_s2(FALSE)
@@ -447,7 +442,7 @@ iucn_turtles_invalid_report
 sf_use_s2(old_s2)
 
 
-# 4.6. Check whether turtle detections overlap their IUCN polygons
+# 3.6. Check whether turtle detections overlap their IUCN polygons------------------------------------------------
 
 old_s2 <- sf_use_s2()
 sf_use_s2(FALSE)
@@ -528,7 +523,7 @@ sf_use_s2(old_s2)
 turtle_detection_iucn_detail
 
 
-# 4.7. Add turtle IUCN overlap information to metadata
+# 3.7. Add turtle IUCN overlap information to metadata------------------------------------------------
 
 metadata <- metadata %>%
   left_join(
@@ -583,13 +578,11 @@ rm(
 
 gc()
 
-#-------------------------------------------------------------------------------
-#
-# 5. Check if fish species belong to study area using IUCN polygons
-#
-#-------------------------------------------------------------------------------
 
-# 5.1. Select fish species from metadata
+
+# 4. Check if fish species belong to study area using IUCN polygons------------------------------------------------
+
+# 4.1. Select fish species from metadata------------------------------------------------
 
 fish_metadata <- metadata %>%
   filter(
@@ -602,7 +595,7 @@ fish_species <- unique(fish_metadata$corrected_name)
 fish_species
 
 
-# 5.2. Identify fish columns in data
+# 4.2. Identify fish columns in data------------------------------------------------
 
 fish_cols_data <- str_replace_all(fish_species, " ", ".")
 fish_cols_data <- fish_cols_data[fish_cols_data %in% names(data)]
@@ -610,7 +603,7 @@ fish_cols_data <- fish_cols_data[fish_cols_data %in% names(data)]
 fish_cols_data
 
 
-# 5.3. Extract fish detections from data
+# 4.3. Extract fish detections from data------------------------------------------------
 
 fish_detections <- data %>%
   mutate(row_id = row_number()) %>%
@@ -628,7 +621,7 @@ fish_detections <- data %>%
 fish_detections
 
 
-# 5.4. Convert fish detections to spatial points
+# 4.4. Convert fish detections to spatial points------------------------------------------------
 
 fish_detection_points <- fish_detections %>%
   st_as_sf(
@@ -638,7 +631,7 @@ fish_detection_points <- fish_detections %>%
   )
 
 
-# 5.5. Read IUCN fish shapefiles one by one and keep only our species
+# 4.5. Read IUCN fish shapefiles one by one and keep only our species------------------------------------------------
 
 fish_shps <- list.files(
   file.path(iucn_dir, "MARINEFISH"),
@@ -673,7 +666,7 @@ iucn_fish_filtered <- bind_rows(iucn_fish_filtered_list)
 unique(iucn_fish_filtered$sci_name)
 
 
-# 5.6. Check which fish species have IUCN polygons
+# 4.6. Check which fish species have IUCN polygons------------------------------------------------
 
 fish_with_iucn <- sort(unique(iucn_fish_filtered$sci_name))
 
@@ -683,7 +676,7 @@ fish_with_iucn
 fish_missing_iucn
 
 
-# 5.7. Check geometry validity
+# 4.7. Check geometry validity------------------------------------------------
 
 old_s2 <- sf_use_s2()
 sf_use_s2(FALSE)
@@ -719,7 +712,7 @@ iucn_fish_invalid_report
 sf_use_s2(old_s2)
 
 
-# 5.8. Check whether fish detections overlap their IUCN polygons
+# 4.8. Check whether fish detections overlap their IUCN polygons------------------------------------------------
 
 old_s2 <- sf_use_s2()
 sf_use_s2(FALSE)
@@ -769,7 +762,7 @@ sf_use_s2(old_s2)
 
 fish_iucn_overlap
 
-# 5.9. Point-by-point overlap detail
+# 4.9. Point-by-point overlap detail------------------------------------------------
 
 old_s2 <- sf_use_s2()
 sf_use_s2(FALSE)
@@ -800,7 +793,7 @@ fish_detection_iucn_detail
 
 
 
-# 5.10. Plot FALSE ones, to double check:
+# 4.10. Plot FALSE ones, to double check------------------------------------------------
 
 # Species with at least one detection outside IUCN range
 fish_false_species <- fish_detection_iucn_detail %>%
@@ -912,7 +905,7 @@ for (sp in fish_false_species) {
   )
 }
 
-# 5.11. Visually inspect the plots and make a manual decision:
+# 4.11. Visually inspect the plots and make a manual decision------------------------------------------------
 # Some are not detected within the polygons just because the polygon is more 
 # coastal, but that is fine, eDNA moves with currents
 
@@ -973,7 +966,7 @@ for (sp in fish_false_species) {
 # "Dagetichthys lusitanicus" # From western central atlantic (west Africa)
 
 
-# 5.12. Add fish IUCN overlap information to metadata
+# 4.12. Add fish IUCN overlap information to metadata------------------------------------------------
 # Metadata dataset:
 #file_path <- paste0(input_data, "/processed_df")
 #file <- paste0(file_path,  "/metadata_iucnMammals_Turtles_Fish.csv")
@@ -1088,7 +1081,7 @@ metadata %>%
   ) %>%
   arrange(corrected_name)
 
-# 5.13. Final decision combining automatic and manual inspection
+# 4.13. Final decision combining automatic and manual inspection------------------------------------------------
 metadata <- metadata %>%
   mutate(
     finalIUCN_acceptance = case_when(
@@ -1115,7 +1108,7 @@ metadata %>%
   ) %>%
   arrange(corrected_name)
 
-# 5.14. Export updated metadata
+# 4.14. Export updated metadata------------------------------------------------
 
 file_path <- paste0(input_data, "/processed_df")
 if (!dir.exists(file_path)) dir.create(file_path, recursive = TRUE)

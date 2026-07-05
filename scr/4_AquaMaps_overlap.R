@@ -15,9 +15,7 @@ library(ggplot2)
 #remotes::install_github("raquamaps/aquamapsdata", dependencies = TRUE)
 library(aquamapsdata)
 
-#-------------------------------------------------------------------------------
-# 1. Load metadata and original data
-#-------------------------------------------------------------------------------
+# 1. Load metadata and original data------------------------------------------------
 
 file_path <- paste0(input_data, "/processed_df")
 
@@ -32,10 +30,8 @@ head(metadata)
 head(data)
 
 
-##-------------------------------------------------------------------------------
-## 2. Select species needing AquaMaps validation
-##-------------------------------------------------------------------------------
-#
+# 2. Select species needing AquaMaps validation------------------------------------------------
+
 #species_aquamaps_check <- metadata %>%
 #  filter(
 #    TaxaTargeted == "Yes",
@@ -43,19 +39,17 @@ head(data)
 #  ) %>%
 #  distinct(corrected_name, original_colname) %>%
 #  arrange(corrected_name)
-#
+
 #species_aquamaps_check
-#
+
 #species_to_check <- unique(species_aquamaps_check$corrected_name)
-#
-#
-##-------------------------------------------------------------------------------
-## 3. Extract detections for these species from original data
-##-------------------------------------------------------------------------------
-#
+
+
+# 3. Extract detections for these species from original data#----------------------------
+
 #species_cols <- species_aquamaps_check$original_colname
 #species_cols <- species_cols[species_cols %in% names(data)]
-#
+
 #aquamaps_detections <- data %>%
 #  mutate(row_id = row_number()) %>%
 #  dplyr::select(row_id, sample_id, latitude, longitude, all_of(species_cols)) %>%
@@ -70,12 +64,11 @@ head(data)
 #    by = "original_colname"
 #  ) %>%
 #  rename(species = corrected_name)
-#
+
 #aquamaps_detections
 
-#-------------------------------------------------------------------------------
-# 4. Check function working:
-#-------------------------------------------------------------------------------
+# 4. Check function working------------------------------------------------
+
 # Test with the tiny example database included in the package
 default_db("extdata")
 
@@ -111,9 +104,8 @@ names(hit)
 ras <- am_raster(hit$key[1])
 plot(ras)
 
-#-------------------------------------------------------------------------------
-# 5. Function to check AquaMaps probability at detection points
-#-------------------------------------------------------------------------------
+# 5. Function to check AquaMaps probability at detection points------------------------------------------------
+
 # AquaMaps uses modelled probability of occurrence.
 # Here we check if detections fall in cells with probability > 0.4 (following Coll et al 2010; doi: 10.1371/journal.pone.0011842).
 
@@ -299,9 +291,7 @@ check_aquamaps_one_species <- function(sp, detections_df, prob_threshold = 0.4) 
 }
 
 
-#-------------------------------------------------------------------------------
-# 6. Run AquaMaps overlap check for species which occurrence in the study area is unclear
-#-------------------------------------------------------------------------------
+# 6. Run AquaMaps overlap check for species which occurrence in the study area is unclear------------------------------------------------
 
 #default_db("sqlite")
 #
@@ -314,9 +304,8 @@ check_aquamaps_one_species <- function(sp, detections_df, prob_threshold = 0.4) 
 #
 #aquamaps_overlap
 
-#-------------------------------------------------------------------------------
-# 7. Check AquaMaps overlap for all species
-#-------------------------------------------------------------------------------
+# 7. Check AquaMaps overlap for all species------------------------------------------------
+
 
 # Species to evaluate
 species_to_check <- metadata %>%
@@ -412,9 +401,7 @@ check_aquamaps_one_species(
 #Fis-23108
 
 
-#-------------------------------------------------------------------------------
-# 8. Add relevant AquaMaps information to metadata
-#-------------------------------------------------------------------------------
+# 8. Add relevant AquaMaps information to metadata------------------------------------------------
 
 metadata <- metadata %>%
   left_join(
@@ -442,9 +429,7 @@ metadata %>%
   arrange(corrected_name)
 
 
-#-------------------------------------------------------------------------------
-# 9. Export updated metadata
-#-------------------------------------------------------------------------------
+# 9. Export updated metadata------------------------------------------------
 
 file <- paste0(file_path, "/metadata_iucn_aquamaps_decision.csv")
 
@@ -455,9 +440,7 @@ write.csv2(
   na = ""
 )
 
-#-------------------------------------------------------------------------------
-# 10. Plots to check those not overlapping
-#-------------------------------------------------------------------------------
+# 10. Plots to check those not overlapping------------------------------------------------
 
 default_db("sqlite")
 
@@ -606,154 +589,8 @@ for (sp in aquamaps_false_species) {
 
 
 
+# 11.Check rare results------------------------------------------------
 
-
-
-#-------------------------------------------------------------------------------
-# 10. Plots to check those not overlapping
-#-------------------------------------------------------------------------------
-
-default_db("sqlite")
-
-plot_dir <- file.path(input_data, "figures", "AquaMaps_false_species")
-dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
-
-world_plot <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf") %>%
-  st_make_valid()
-
-plot_extent <- raster::extent(-10, 45, 25, 50)
-
-aquamaps_false_species <- aquamaps_overlap %>%
-  dplyr::filter(overlaps_aquamaps_p04 == FALSE) %>%
-  dplyr::filter(aquamaps_found == TRUE) %>%
-  dplyr::filter(!is.na(aquamaps_id)) %>%
-  dplyr::pull(species) %>%
-  unique()
-
-for (sp in aquamaps_false_species) {
-  
-  message("Plotting AquaMaps: ", sp)
-  
-  am_id <- aquamaps_overlap %>%
-    dplyr::filter(species == sp) %>%
-    dplyr::pull(aquamaps_id) %>%
-    unique() %>%
-    .[1]
-  
-  ras <- tryCatch(
-    am_raster(am_id),
-    error = function(e) NULL
-  )
-  
-  if (is.null(ras)) {
-    message("Skipping ", sp, ": raster not available")
-    next
-  }
-  
-  extent_overlap <- raster::intersect(raster::extent(ras), plot_extent)
-  
-  if (is.null(extent_overlap)) {
-    message("Skipping ", sp, ": raster does not overlap plot extent")
-    next
-  }
-  
-  ras_crop <- raster::crop(ras, plot_extent)
-  
-  ras_df <- raster::rasterToPoints(ras_crop) %>%
-    as.data.frame()
-  
-  names(ras_df) <- c("longitude", "latitude", "aquamaps_prob")
-  
-  points_sp <- aquamaps_detections %>%
-    dplyr::filter(species == sp) %>%
-    mutate(
-      longitude = as.numeric(longitude),
-      latitude = as.numeric(latitude)
-    )
-  
-  if (nrow(points_sp) == 0) {
-    message("Skipping ", sp, ": no detection points")
-    next
-  }
-  
-  coords_sp <- points_sp %>%
-    dplyr::select(longitude, latitude) %>%
-    as.matrix()
-  
-  points_sp$aquamaps_prob <- raster::extract(ras, coords_sp)
-  
-  points_sp <- points_sp %>%
-    mutate(
-      aquamaps_overlap_class = case_when(
-        is.na(aquamaps_prob) ~ "No AquaMaps cell",
-        aquamaps_prob > 0.4 ~ "Probability > 0.4",
-        aquamaps_prob <= 0.4 ~ "Probability <= 0.4"
-      )
-    )
-  
-  p <- ggplot() +
-    geom_raster(
-      data = ras_df,
-      aes(x = longitude, y = latitude, fill = aquamaps_prob)
-    ) +
-    geom_sf(
-      data = world_plot,
-      fill = "grey90",
-      colour = "grey40",
-      linewidth = 0.2
-    ) +
-    geom_point(
-      data = points_sp,
-      aes(
-        x = longitude,
-        y = latitude,
-        colour = aquamaps_overlap_class
-      ),
-      size = 1.2,
-      alpha = 0.9
-    ) +
-    scale_colour_manual(
-      values = c(
-        "Probability > 0.4" = "darkgreen",
-        "Probability <= 0.4" = "red3",
-        "No AquaMaps cell" = "grey30"
-      ),
-      name = "Point classification"
-    )+
-    scale_fill_viridis_c(
-      name = "AquaMaps\nprobability",
-      limits = c(0, 1),
-      na.value = NA
-    ) +
-    coord_sf(
-      xlim = c(-10, 45),
-      ylim = c(25, 50),
-      expand = FALSE
-    ) +
-    labs(
-      title = paste0(sp, " - AquaMaps probability and eDNA detections"),
-      subtitle = "Threshold for overlap: probability > 0.4",
-      shape = "Overlap > 0.4"
-    ) +
-    theme_bw()
-  
-  file_name <- str_replace_all(sp, " ", "_")
-  
-  ggsave(
-    filename = file.path(plot_dir, paste0(file_name, "_AquaMaps_overlap_check.png")),
-    plot = p,
-    width = 8,
-    height = 6,
-    dpi = 300
-  )
-  
-  rm(ras, ras_crop, ras_df, points_sp, p)
-  gc()
-}
-
-#-------------------------------------------------------------------------------
-# 11.Check rare results:
-#-------------------------------------------------------------------------------
 aquamaps_false_species <- aquamaps_overlap %>%
   dplyr::filter(overlaps_aquamaps_p04 == FALSE) %>%
   dplyr::pull(species) %>%
@@ -791,8 +628,8 @@ aquamaps_false_species
 #Tetragonurus cuvieri         
 #Trachipterus arcticus # rare          
 #Trachyscorpia cristulata  #rare 
-#
-#
+
+
 ## Does not occur in the Mediterranean:
 #Cyclothone atraria
 #Dagetichthys lusitanicus 
@@ -807,15 +644,14 @@ aquamaps_false_species
 #Scorpaena neglecta
 #Thunnus orientalis
 #Thunnus tonggol
-#
+
 ## Freshwater
 #Leuciscus leuciscus
 #Oncorhynchus mykiss
 
 
-#-------------------------------------------------------------------------------
-# 12.Update metadata
-#-------------------------------------------------------------------------------
+# 12.Update metadata------------------------------------------------------------
+
 head(metadata)
 
 # Update metadata with AquaMaps visual inspection
@@ -898,9 +734,7 @@ metadata <- metadata %>%
   )
 
 
-#-------------------------------------------------------------------------------
-# 13. Export updated metadata
-#-------------------------------------------------------------------------------
+# 13. Export updated metadata----------------------------------------------------
 
 file_path <- paste0(input_data, "/processed_df")
 if (!dir.exists(file_path)) dir.create(file_path, recursive = TRUE)
