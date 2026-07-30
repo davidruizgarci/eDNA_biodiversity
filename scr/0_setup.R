@@ -3,13 +3,14 @@
 #--------------------------------------------------------------------------------
 
 # 1. set computer --------------------------------------------------------------
+user <- "David" 
 user <- "david" 
 
 
 
 # 2. Set main data paths -------------------------------------------------------
 if(user == "david") main_dir <- "C:/Users/david/SML Dropbox/gitdata/eDNA_Biodiversity"
-
+if(user == "David") main_dir <- "C:/Users/David/SML Dropbox/gitdata/eDNA_Biodiversity"
 
 # set main working directory
 setwd(main_dir)
